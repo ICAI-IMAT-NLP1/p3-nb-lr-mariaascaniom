@@ -84,12 +84,32 @@ def evaluate_classification(predictions: torch.Tensor, labels: torch.Tensor) -> 
     Evaluate classification metrics including accuracy, precision, recall, and F1-score.
 
     Args:
-        predictions (torch.Tensor): Predictions from the model.
-        labels (torch.Tensor): Actual ground truth labels.
+        predictions (torch.Tensor): Predictions from the model (binary values 0 or 1).
+        labels (torch.Tensor): Actual ground truth labels (binary values 0 or 1).
 
     Returns:
-        dict: A dictionary containing the calculated metrics.
+        Dict[str, float]: A dictionary containing 'accuracy', 'precision', 'recall', and 'f1_score'.
     """
-    metrics: Dict[str, float] = None
+    predictions = predictions.to(torch.int)
+    labels = labels.to(torch.int)
+
+    TP = torch.sum((predictions == 1) & (labels == 1)).item()  
+    TN = torch.sum((predictions == 0) & (labels == 0)).item()  
+    FP = torch.sum((predictions == 1) & (labels == 0)).item() 
+    FN = torch.sum((predictions == 0) & (labels == 1)).item()  
+    
+    epsilon = 1e-10
+
+    accuracy = (TP + TN) / (TP + TN + FP + FN + epsilon)
+    precision = TP / (TP + FP + epsilon)
+    recall = TP / (TP + FN + epsilon)
+    f1_score = 2 * (precision * recall) / (precision + recall + epsilon)
+
+    metrics = {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1_score,
+    }
 
     return metrics
